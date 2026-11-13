@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบนับคะแนน & จับเวลาหุ่นยนต์ (จอกรรมการควบคุม) - การแข่งขันหุ่นยนต์ปักธงชัยพิชิตยอดเขาลำพระเพลิง ครั้งที่ 5</title>
+  <!-- Google Fonts: Orbitron, Anton, Bebas Neue, Chakra Petch & Rajdhani -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Chakra+Petch:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="sci-fi-theme">
+  <!-- Background Grid & Cyber Particle Ambience -->
+  <div class="cyber-bg-overlay">
+    <div class="cyber-grid"></div>
+    <div class="radar-sweep"></div>
+    <div class="vignette"></div>
+    <div class="floating-light light-blue"></div>
+    <div class="floating-light light-red"></div>
+  </div>
+
+  <div class="app-container" id="mainScoreboardView">
+    <!-- Top Header HUD -->
+    <header class="hud-header">
+      <div class="header-left">
+        <div class="event-badge">
+          <i data-lucide="cpu" class="badge-icon"></i>
+          <span>ROBOTICS CONTROLLER HUD • ครั้งที่ 5</span>
+        </div>
+        <div class="event-title-group">
+          <h1 class="main-title" contenteditable="true" spellcheck="false" id="tournamentTitle">
+            การแข่งขันหุ่นยนต์ปักธงชัยพิชิตยอดเขาลำพระเพลิง ครั้งที่ 5
+          </h1>
+          <div class="sub-title-row">
+            <span class="sub-title-item" contenteditable="true" spellcheck="false" id="tournamentSubTitle">
+              ศูนย์การค้าเซ็นทรัล โคราช • วิทยาลัยเทคนิคปักธงชัย ร่วมกับ Central Group
+            </span>
+            <span class="divider">|</span>
+            <div class="match-category-tag" id="categoryTag" contenteditable="true" spellcheck="false">
+              ระดับ ม.ต้น / ม.ปลาย
+            </div>
+            <div class="match-round-tag" id="roundTag" contenteditable="true" spellcheck="false">
+              รอบคัดเลือก : MATCH 01
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Control Actions -->
+      <div class="header-right">
+        <!-- Separate Window for Projector / Arena Screen -->
+        <button id="btnOpenDisplayWindow" class="hud-display-btn" onclick="openDisplayWindow()" title="เปิดหน้าต่างจอแสดงผลโปรเจกเตอร์แยกอีกจอ">
+          <i data-lucide="monitor-up"></i>
+          <span>แยกจอแสดงผล (Projector)</span>
+        </button>
+
+        <!-- Button to open Canva Timer Mode inside this window -->
+        <button id="btnOpenCanvaView" class="hud-canva-trigger-btn" onclick="openCanvaView()" title="เปิดหน้าจอจับเวลาและสกอร์บอร์ดใหญ่ในหน้านี้">
+          <span class="canva-live-dot"></span>
+          <i data-lucide="tv"></i>
+          <span>จอจับเวลา CANVA</span>
+        </button>
+
+        <!-- Toggle Exciting Sound Beat -->
+        <button id="btnBeatToggle" class="hud-icon-btn beat-btn active" onclick="toggleArenaBeatMaster()" title="เปิด/ปิด ซาวน์จังหวะตื่นเต้นในการแข่งขัน (B)">
+          <i data-lucide="music-2" id="beatIcon"></i>
+        </button>
+
+        <a href="https://canva.link/g74pwvoj4m9nb1h" target="_blank" class="hud-icon-btn canva-ext-btn" title="เปิดดูลิงก์ Canva ต้นฉบับ">
+          <i data-lucide="external-link"></i>
+        </a>
+
+        <div class="hud-status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text" id="systemStatus">SYSTEM READY</span>
+        </div>
+        <button id="btnSoundToggle" class="hud-icon-btn" title="เปิด/ปิดเสียงเอฟเฟกต์">
+          <i data-lucide="volume-2" id="soundIcon"></i>
+        </button>
+        <button id="btnHistory" class="hud-icon-btn" title="ประวัติการแข่งขัน">
+          <i data-lucide="history"></i>
+        </button>
+        <button id="btnSettings" class="hud-icon-btn" title="ตั้งค่าการแข่งขัน">
+          <i data-lucide="settings"></i>
+        </button>
+        <button id="btnFullscreen" class="hud-icon-btn" title="เต็มจอ (F11)">
+          <i data-lucide="maximize"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Battlefield HUD -->
+    <main class="battlefield-grid">
+      
+      <!-- ================= BLUE TEAM SECTION ================= -->
+      <section class="team-card team-blue" id="blueTeamSection">
+        <div class="team-corner top-left"></div>
+        <div class="team-corner bottom-right"></div>
+        <div class="team-accent-glow"></div>
+
+        <!-- Team Header -->
+        <div class="team-hud-header">
+          <div class="team-badge">
+            <i data-lucide="shield" class="team-icon"></i>
+            <span>BLUE TEAM</span>
+          </div>
+          <div class="team-rank-tag" id="blueStatusTag">READY</div>
+        </div>
+
+        <!-- Editable Team Name & School -->
+        <div class="team-identity">
+          <div class="team-name-wrapper">
+            <input type="text" class="team-name-input" id="blueTeamName" value="ทีมพยัคฆ์สีน้ำเงิน (BLUE MECHA)" placeholder="ระบุชื่อทีมสีน้ำเงิน">
+            <i data-lucide="edit-3" class="edit-hint-icon"></i>
+          </div>
+          <input type="text" class="team-sub-input" id="blueSchoolName" value="โรงเรียนตัวแทนสายน้ำเงิน" placeholder="โรงเรียน / สังกัด">
+        </div>
+
+        <!-- Large Score Display -->
+        <div class="score-display-container">
+          <div class="score-backdrop-hud">SCORE</div>
+          <div class="digital-score" id="blueTotalScore">0</div>
+          <div class="max-score-hint">MAX 120 PTS</div>
+        </div>
+
+        <!-- Score Quick Adjust Bar -->
+        <div class="quick-adjust-bar">
+          <button class="btn-micro" onclick="adjustCustomScore('blue', -10)">-10</button>
+          <button class="btn-micro" onclick="adjustCustomScore('blue', -1)">-1</button>
+          <span class="adjust-label">ปรับคะแนนด่วน</span>
+          <button class="btn-micro" onclick="adjustCustomScore('blue', 1)">+1</button>
+          <button class="btn-micro" onclick="adjustCustomScore('blue', 10)">+10</button>
+        </div>
+
+        <!-- Missions Checklist Panel -->
+        <div class="missions-panel">
+          <div class="panel-heading">
+            <i data-lucide="target" class="panel-icon"></i>
+            <span>ภารกิจตามกติกา ครั้งที่ 5 (120 คะแนน)</span>
+          </div>
+
+          <!-- Mission 1: Box Stacking (9 Boxes = 90 pts) -->
+          <div class="mission-item mission-boxes">
+            <div class="mission-header-row">
+              <div class="mission-title-group">
+                <span class="mission-badge m1">ภารกิจ 1</span>
+                <span class="mission-name">จัดเรียงกล่อง 3-3-3</span>
+              </div>
+              <span class="mission-score-counter"><span id="blueBoxScore">0</span> / 90 คะแนน</span>
+            </div>
+            <p class="mission-desc">R1 + R2 ร่วมจัดเรียง 3 ชั้น (กล่องละ 10 คะแนน, สูงสุด 9 กล่อง)</p>
+
+            <!-- Box Tier Matrix Grid -->
+            <div class="box-matrix-hud">
+              <!-- Tier 3: Top -->
+              <div class="tier-row" data-tier="top">
+                <span class="tier-label">ชั้นบน (3)</span>
+                <div class="box-slots">
+                  <button class="box-slot-btn blue-box" id="blue_box_top_team" onclick="toggleBox('blue', 'top', 'team')">
+                    <span class="slot-type">ทีม</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="blue_box_top_w1" onclick="toggleBox('blue', 'top', 'w1')">
+                    <span class="slot-type">ขาว 1</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="blue_box_top_w2" onclick="toggleBox('blue', 'top', 'w2')">
+                    <span class="slot-type">ขาว 2</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tier 2: Mid -->
+              <div class="tier-row" data-tier="mid">
+                <span class="tier-label">ชั้นกลาง (2)</span>
+                <div class="box-slots">
+                  <button class="box-slot-btn blue-box" id="blue_box_mid_team" onclick="toggleBox('blue', 'mid', 'team')">
+                    <span class="slot-type">ทีม</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="blue_box_mid_w1" onclick="toggleBox('blue', 'mid', 'w1')">
+                    <span class="slot-type">ขาว 1</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="blue_box_mid_w2" onclick="toggleBox('blue', 'mid', 'w2')">
+                    <span class="slot-type">ขาว 2</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tier 1: Base -->
+              <div class="tier-row" data-tier="base">
+                <span class="tier-label">ชั้นล่าง (1)</span>
+                <div class="box-slots">
+                  <button class="box-slot-btn blue-box" id="blue_box_base_team" onclick="toggleBox('blue', 'base', 'team')">
+                    <span class="slot-type">ทีม</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="blue_box_base_w1" onclick="toggleBox('blue', 'base', 'w1')">
+                    <span class="slot-type">ขาว 1</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="blue_box_base_w2" onclick="toggleBox('blue', 'base', 'w2')">
+                    <span class="slot-type">ขาว 2</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Action for Stacking -->
+            <div class="box-quick-actions">
+              <button class="btn-ghost-small" onclick="setAllBoxes('blue', true)">+ เรียงครบ 9 กล่อง (90)</button>
+              <button class="btn-ghost-small" onclick="setAllBoxes('blue', false)">ล้างกล่อง</button>
+            </div>
+          </div>
+
+          <!-- Mission 2: Golden Egg (10 pts) -->
+          <div class="mission-item mission-toggle" id="blueEggItem" onclick="toggleMission('blue', 'egg')">
+            <div class="toggle-checkbox" id="blueEggCheck"></div>
+            <div class="mission-info">
+              <div class="mission-title-inline">
+                <span class="mission-badge m2">ภารกิจ 2</span>
+                <span class="mission-title-text">ไข่ทองคำ ใน Area 3</span>
+              </div>
+              <span class="mission-hint">R2 นำไข่ทองคำ 1 ฟองไปวางใน Area 3 ไม่ตกออกนอกพื้นที่</span>
+            </div>
+            <div class="mission-point-tag">+10 PTS</div>
+          </div>
+
+          <!-- Mission 3: Flag (20 pts) -->
+          <div class="mission-item mission-toggle" id="blueFlagItem" onclick="toggleMission('blue', 'flag')">
+            <div class="toggle-checkbox" id="blueFlagCheck"></div>
+            <div class="mission-info">
+              <div class="mission-title-inline">
+                <span class="mission-badge m3">ภารกิจ 3</span>
+                <span class="mission-title-text">ปักธงสำเร็จ (จุดสิ้นสุด)</span>
+              </div>
+              <span class="mission-hint">R2 หยิบธงและนำไปปักในตำแหน่งที่กำหนด สิ้นสุดการแข่งขัน</span>
+            </div>
+            <div class="mission-point-tag">+20 PTS</div>
+          </div>
+
+          <!-- Fouls & Penalties Counter -->
+          <div class="foul-row">
+            <div class="foul-title">
+              <i data-lucide="alert-triangle" class="foul-icon"></i>
+              <span>ฟาวล์ / หักคะแนน (ครั้งละ -5 คะแนน)</span>
+            </div>
+            <div class="foul-controls">
+              <button class="btn-foul-adjust" onclick="adjustFoul('blue', -1)">-</button>
+              <span class="foul-count" id="blueFoulCount">0</span>
+              <button class="btn-foul-adjust" onclick="adjustFoul('blue', 1)">+</button>
+              <span class="foul-deduction-badge" id="blueFoulDeduct">0 คะแนน</span>
+            </div>
+          </div>
+
+          <!-- Finish Match / Timestamp button -->
+          <div class="team-finish-action">
+            <button class="btn-team-finish blue-btn" id="blueFinishBtn" onclick="markTeamFinish('blue')">
+              <i data-lucide="flag"></i>
+              <span id="blueFinishBtnText">บันทึกเวลาจบทีมน้ำเงิน</span>
+            </button>
+            <div class="finish-time-badge" id="blueFinishTime">เวลา: ยังไม่จบ</div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= CENTER ARENA HUD (TIMER & MATCH STATUS) ================= -->
+      <section class="arena-center-hud">
+        
+        <!-- VS Emblem -->
+        <div class="vs-emblem">
+          <div class="vs-line left"></div>
+          <div class="vs-badge">VS</div>
+          <div class="vs-line right"></div>
+        </div>
+
+        <!-- Master Match Timer Box -->
+        <div class="timer-card">
+          <div class="timer-header">
+            <i data-lucide="timer" class="timer-icon"></i>
+            <span class="timer-mode-title" id="timerModeLabel">ARENA TIMER • นับเวลาการแข่งขัน</span>
+          </div>
+
+          <!-- Digital Clock Display -->
+          <div class="clock-display" id="mainClock">
+            <span id="timerMinutes">03</span>:<span id="timerSeconds">00</span><span class="clock-millis" id="timerMillis">.00</span>
+          </div>
+
+          <!-- Timer Status Indicator -->
+          <div class="timer-state-bar">
+            <span class="timer-state-text" id="timerStateText">READY TO LAUNCH</span>
+          </div>
+
+          <!-- Timer Controls -->
+          <div class="timer-controls">
+            <button class="btn-cyber-primary" id="btnTimerStartPause" onclick="toggleTimer()">
+              <i data-lucide="play" id="timerPlayIcon"></i>
+              <span id="timerBtnText">START</span>
+            </button>
+            <button class="btn-cyber-secondary" id="btnTimerReset" onclick="resetTimerPrompt()">
+              <i data-lucide="rotate-ccw"></i>
+              <span>RESET</span>
+            </button>
+          </div>
+
+          <!-- Quick Presets for Timer -->
+          <div class="timer-presets">
+            <button class="preset-btn" onclick="setTimerPhase('setup', 60)">SET UP 1น.</button>
+            <button class="preset-btn" onclick="setTimerPreset(180)">แข่ง 3 นาที</button>
+            <button class="preset-btn" onclick="setTimerPreset(300)">5 นาที</button>
+            <button class="preset-btn" onclick="setCountupMode()">เดินหน้า</button>
+          </div>
+
+          <!-- Big button to launch Canva Mode directly from timer -->
+          <button class="btn-canva-banner" onclick="openCanvaView()">
+            <i data-lucide="sparkles"></i>
+            <span>เปิดหน้าจอจับเวลา CANVA (SET UP & สกอร์ยักษ์)</span>
+          </button>
+        </div>
+
+        <!-- Live Match Leader Indicator -->
+        <div class="leader-board-card">
+          <div class="leader-title">MATCH LEADER / สถานะคะแนน</div>
+          <div class="leader-result" id="leaderStatusText">คะแนนเสมอกัน (0 - 0)</div>
+          <div class="diff-bar-container">
+            <div class="diff-bar blue" id="diffBarBlue" style="width: 50%;"></div>
+            <div class="diff-bar red" id="diffBarRed" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- Center Arena Operations -->
+        <div class="arena-operations-card">
+          <div class="ops-title">
+            <i data-lucide="sliders" class="ops-icon"></i>
+            <span>การจัดการแข่งขัน</span>
+          </div>
+          <div class="ops-grid">
+            <button class="btn-ops" onclick="saveMatchToHistory()">
+              <i data-lucide="save"></i>
+              <span>บันทึกผลรอบนี้</span>
+            </button>
+            <button class="btn-ops" onclick="exportScoresExcel()">
+              <i data-lucide="file-spreadsheet"></i>
+              <span>ส่งออกคะแนน (Excel)</span>
+            </button>
+            <button class="btn-ops" onclick="swapTeams()">
+              <i data-lucide="arrow-left-right"></i>
+              <span>สลับฝั่งทีม</span>
+            </button>
+            <button class="btn-ops btn-danger-ops" onclick="resetAllScoresPrompt()">
+              <i data-lucide="trash-2"></i>
+              <span>รีเซ็ตสกอร์ทั้งหมด</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Rules Reference Quick Link Card -->
+        <div class="rules-quick-card">
+          <div class="rules-header">
+            <i data-lucide="file-text"></i>
+            <span>เกณฑ์ให้คะแนนปักธงชัย ครั้งที่ 5</span>
+          </div>
+          <ul class="rules-mini-list">
+            <li><strong>1. จัดเรียงกล่อง (90 คะแนน):</strong> 9 กล่องๆ ละ 10 คะแนน (ชั้นละ: ทีม 1 กล่อง + ขาว 2 กล่อง)</li>
+            <li><strong>2. ไข่ทองคำ (10 คะแนน):</strong> ห้ามตกนอก Area 3</li>
+            <li><strong>3. ปักธง (20 คะแนน):</strong> ปักตรงจุดเสร็จสิ้น = จบเวลาทันที</li>
+            <li><strong>คะแนนเต็ม 120 คะแนน</strong></li>
+          </ul>
+        </div>
+
+      </section>
+
+      <!-- ================= RED TEAM SECTION ================= -->
+      <section class="team-card team-red" id="redTeamSection">
+        <div class="team-corner top-right"></div>
+        <div class="team-corner bottom-left"></div>
+        <div class="team-accent-glow"></div>
+
+        <!-- Team Header -->
+        <div class="team-hud-header">
+          <div class="team-badge">
+            <i data-lucide="flame" class="team-icon"></i>
+            <span>RED TEAM</span>
+          </div>
+          <div class="team-rank-tag" id="redStatusTag">READY</div>
+        </div>
+
+        <!-- Editable Team Name & School -->
+        <div class="team-identity">
+          <div class="team-name-wrapper">
+            <input type="text" class="team-name-input" id="redTeamName" value="ทีมอินทรีแดงเพลิง (RED DRAGON)" placeholder="ระบุชื่อทีมสีแดง">
+            <i data-lucide="edit-3" class="edit-hint-icon"></i>
+          </div>
+          <input type="text" class="team-sub-input" id="redSchoolName" value="โรงเรียนตัวแทนสายแดง" placeholder="โรงเรียน / สังกัด">
+        </div>
+
+        <!-- Large Score Display -->
+        <div class="score-display-container">
+          <div class="score-backdrop-hud">SCORE</div>
+          <div class="digital-score" id="redTotalScore">0</div>
+          <div class="max-score-hint">MAX 120 PTS</div>
+        </div>
+
+        <!-- Score Quick Adjust Bar -->
+        <div class="quick-adjust-bar">
+          <button class="btn-micro" onclick="adjustCustomScore('red', -10)">-10</button>
+          <button class="btn-micro" onclick="adjustCustomScore('red', -1)">-1</button>
+          <span class="adjust-label">ปรับคะแนนด่วน</span>
+          <button class="btn-micro" onclick="adjustCustomScore('red', 1)">+1</button>
+          <button class="btn-micro" onclick="adjustCustomScore('red', 10)">+10</button>
+        </div>
+
+        <!-- Missions Checklist Panel -->
+        <div class="missions-panel">
+          <div class="panel-heading">
+            <i data-lucide="target" class="panel-icon"></i>
+            <span>ภารกิจตามกติกา ครั้งที่ 5 (120 คะแนน)</span>
+          </div>
+
+          <!-- Mission 1: Box Stacking (9 Boxes = 90 pts) -->
+          <div class="mission-item mission-boxes">
+            <div class="mission-header-row">
+              <div class="mission-title-group">
+                <span class="mission-badge m1">ภารกิจ 1</span>
+                <span class="mission-name">จัดเรียงกล่อง 3-3-3</span>
+              </div>
+              <span class="mission-score-counter"><span id="redBoxScore">0</span> / 90 คะแนน</span>
+            </div>
+            <p class="mission-desc">R1 + R2 ร่วมจัดเรียง 3 ชั้น (กล่องละ 10 คะแนน, สูงสุด 9 กล่อง)</p>
+
+            <!-- Box Tier Matrix Grid -->
+            <div class="box-matrix-hud">
+              <!-- Tier 3: Top -->
+              <div class="tier-row" data-tier="top">
+                <span class="tier-label">ชั้นบน (3)</span>
+                <div class="box-slots">
+                  <button class="box-slot-btn red-box" id="red_box_top_team" onclick="toggleBox('red', 'top', 'team')">
+                    <span class="slot-type">ทีม</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="red_box_top_w1" onclick="toggleBox('red', 'top', 'w1')">
+                    <span class="slot-type">ขาว 1</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="red_box_top_w2" onclick="toggleBox('red', 'top', 'w2')">
+                    <span class="slot-type">ขาว 2</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tier 2: Mid -->
+              <div class="tier-row" data-tier="mid">
+                <span class="tier-label">ชั้นกลาง (2)</span>
+                <div class="box-slots">
+                  <button class="box-slot-btn red-box" id="red_box_mid_team" onclick="toggleBox('red', 'mid', 'team')">
+                    <span class="slot-type">ทีม</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="red_box_mid_w1" onclick="toggleBox('red', 'mid', 'w1')">
+                    <span class="slot-type">ขาว 1</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="red_box_mid_w2" onclick="toggleBox('red', 'mid', 'w2')">
+                    <span class="slot-type">ขาว 2</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Tier 1: Base -->
+              <div class="tier-row" data-tier="base">
+                <span class="tier-label">ชั้นล่าง (1)</span>
+                <div class="box-slots">
+                  <button class="box-slot-btn red-box" id="red_box_base_team" onclick="toggleBox('red', 'base', 'team')">
+                    <span class="slot-type">ทีม</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="red_box_base_w1" onclick="toggleBox('red', 'base', 'w1')">
+                    <span class="slot-type">ขาว 1</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                  <button class="box-slot-btn white-box" id="red_box_base_w2" onclick="toggleBox('red', 'base', 'w2')">
+                    <span class="slot-type">ขาว 2</span>
+                    <span class="slot-pts">+10</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Action for Stacking -->
+            <div class="box-quick-actions">
+              <button class="btn-ghost-small" onclick="setAllBoxes('red', true)">+ เรียงครบ 9 กล่อง (90)</button>
+              <button class="btn-ghost-small" onclick="setAllBoxes('red', false)">ล้างกล่อง</button>
+            </div>
+          </div>
+
+          <!-- Mission 2: Golden Egg (10 pts) -->
+          <div class="mission-item mission-toggle" id="redEggItem" onclick="toggleMission('red', 'egg')">
+            <div class="toggle-checkbox" id="redEggCheck"></div>
+            <div class="mission-info">
+              <div class="mission-title-inline">
+                <span class="mission-badge m2">ภารกิจ 2</span>
+                <span class="mission-title-text">ไข่ทองคำ ใน Area 3</span>
+              </div>
+              <span class="mission-hint">R2 นำไข่ทองคำ 1 ฟองไปวางใน Area 3 ไม่ตกออกนอกพื้นที่</span>
+            </div>
+            <div class="mission-point-tag">+10 PTS</div>
+          </div>
+
+          <!-- Mission 3: Flag (20 pts) -->
+          <div class="mission-item mission-toggle" id="redFlagItem" onclick="toggleMission('red', 'flag')">
+            <div class="toggle-checkbox" id="redFlagCheck"></div>
+            <div class="mission-info">
+              <div class="mission-title-inline">
+                <span class="mission-badge m3">ภารกิจ 3</span>
+                <span class="mission-title-text">ปักธงสำเร็จ (จุดสิ้นสุด)</span>
+              </div>
+              <span class="mission-hint">R2 หยิบธงและนำไปปักในตำแหน่งที่กำหนด สิ้นสุดการแข่งขัน</span>
+            </div>
+            <div class="mission-point-tag">+20 PTS</div>
+          </div>
+
+          <!-- Fouls & Penalties Counter -->
+          <div class="foul-row">
+            <div class="foul-title">
+              <i data-lucide="alert-triangle" class="foul-icon"></i>
+              <span>ฟาวล์ / หักคะแนน (ครั้งละ -5 คะแนน)</span>
+            </div>
+            <div class="foul-controls">
+              <button class="btn-foul-adjust" onclick="adjustFoul('red', -1)">-</button>
+              <span class="foul-count" id="redFoulCount">0</span>
+              <button class="btn-foul-adjust" onclick="adjustFoul('red', 1)">+</button>
+              <span class="foul-deduction-badge" id="redFoulDeduct">0 คะแนน</span>
+            </div>
+          </div>
+
+          <!-- Finish Match / Timestamp button -->
+          <div class="team-finish-action">
+            <button class="btn-team-finish red-btn" id="redFinishBtn" onclick="markTeamFinish('red')">
+              <i data-lucide="flag"></i>
+              <span id="redFinishBtnText">บันทึกเวลาจบทีมแดง</span>
+            </button>
+            <div class="finish-time-badge" id="redFinishTime">เวลา: ยังไม่จบ</div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Action Bar / Keyboard Shortcut Guide -->
+    <footer class="hud-footer">
+      <div class="keyboard-hints">
+        <span class="hint-item"><kbd>SPACE</kbd> เริ่ม/หยุดเวลา</span>
+        <span class="hint-item"><kbd>R</kbd> รีเซ็ตเวลา</span>
+        <span class="hint-item hint-blue"><kbd>Q</kbd><kbd>W</kbd> น้ำเงิน +/- ขั้น</span>
+        <span class="hint-item hint-red"><kbd>O</kbd><kbd>P</kbd> แดง +/- ขั้น</span>
+        <span class="hint-item hint-blue"><kbd>A</kbd><kbd>S</kbd> น้ำเงิน ภารกิจ 2/3</span>
+        <span class="hint-item hint-red"><kbd>L</kbd><kbd>;</kbd> แดง ภารกิจ 2/3</span>
+        <span class="hint-item"><kbd>M</kbd> ปิด/เปิดเสียง</span>
+        <span class="hint-item"><kbd>B</kbd> ซาวน์ตื่นเต้น</span>
+        <span class="hint-item"><kbd>C</kbd> โหมด CANVA</span>
+        <span class="hint-item"><kbd>F11</kbd> เต็มจอ</span>
+      </div>
+      <div class="footer-center">
+        <span>การแข่งขันหุ่นยนต์ปักธงชัยพิชิตยอดเขาลำพระเพลิง ครั้งที่ 5 • CENTRAL KORAT</span>
+      </div>
+      <div class="footer-right">
+        <span class="conn-tag" id="connTag"><i data-lucide="wifi"></i> <span id="connTagText">OFFLINE READY</span></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- =========================================================================
+       CANVA ARENA TIMER & GIANT SCORE DISPLAY (โหมดจับเวลา & สกอร์ยักษ์ ครั้งที่ 5)
+       ========================================================================= -->
+  <div class="canva-timer-overlay" id="canvaTimerView">
+    <!-- Top Logos Header (Clean Transparent Logos, No Dark/Red Box) -->
+    <header class="canva-view-header">
+      <div class="canva-logos-container">
+        <img src="logos_transparent.png" alt="Logos: ศึกษาธิการ, สอศ. เทคนิคปักธงชัย, Central Korat, SE-ED" class="canva-header-img">
+      </div>
+
+      <div class="canva-tournament-badge-header">
+        <span class="event-title-glow">การแข่งขันหุ่นยนต์ปักธงชัยพิชิตยอดเขาลำพระเพลิง ครั้งที่ 5</span>
+      </div>
+
+      <div class="canva-view-actions">
+        <!-- Arena Beat Sound Button in Canva -->
+        <button class="canva-action-pill-btn" id="canvaBeatToggle" onclick="toggleArenaBeatMaster()" title="เปิด/ปิด ซาวน์จังหวะตื่นเต้นในการแข่งขัน">
+          <i data-lucide="music-2" id="canvaBeatIcon"></i>
+          <span id="canvaBeatLabel">ซาวน์แข่ง: เปิด</span>
+        </button>
+
+        <button class="canva-action-icon-btn" onclick="toggleSoundMaster()" title="เปิด/ปิดเสียงเอฟเฟกต์">
+          <i data-lucide="volume-2" id="canvaSoundIcon"></i>
+        </button>
+        <button class="canva-action-icon-btn" onclick="toggleFullscreen()" title="โหมดเต็มจอ">
+          <i data-lucide="maximize"></i>
+        </button>
+        <button class="canva-action-icon-btn close-btn" onclick="closeCanvaView()" title="กลับหน้าสกอร์บอร์ด (Esc)">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Center Cosmic Screen Container (The Starfield Display from Canva with GIANT SCORES) -->
+    <main class="canva-central-arena">
+      <div class="canva-screen-frame">
+        <!-- Floating Space Stars & Nebula Background -->
+        <div class="canva-starfield"></div>
+        <div class="canva-nebula-glow"></div>
+
+        <!-- Mode / Phase Selector Pills on Top of Screen -->
+        <div class="canva-phase-pills">
+          <button class="phase-pill active" id="pillPhaseSetup" onclick="setTimerPhase('setup', 60)">
+            <i data-lucide="wrench"></i> SET UP (1 นาที)
+          </button>
+          <button class="phase-pill" id="pillPhaseReady" onclick="setTimerPhase('ready', 5)">
+            <i data-lucide="bell"></i> READY (พร้อม)
+          </button>
+          <button class="phase-pill" id="pillPhaseMatch" onclick="setTimerPhase('match', 180)">
+            <i data-lucide="play-circle"></i> แข่งขัน (3 นาที)
+          </button>
+          <button class="phase-pill" id="pillPhase5Min" onclick="setTimerPhase('match', 300)">
+            5 นาที
+          </button>
+          <button class="phase-pill" id="pillPhaseStopwatch" onclick="setTimerPhase('countup', 0)">
+            เดินหน้า
+          </button>
+        </div>
+
+        <!-- 3-COLUMN ARENA BATTLEFIELD: BLUE GIANT SCORE | CENTER TIMER | RED GIANT SCORE -->
+        <div class="canva-arena-grid">
+          
+          <!-- LEFT: BLUE TEAM GIANT SCORE -->
+          <div class="canva-col-score blue-side">
+            <div class="canva-team-tag">
+              <i data-lucide="shield"></i>
+              <span>BLUE TEAM</span>
+            </div>
+            <div class="canva-team-heading" id="canvaBlueName">ทีมพยัคฆ์สีน้ำเงิน</div>
+            <div class="canva-team-sub" id="canvaBlueSchool">โรงเรียนตัวแทนสายน้ำเงิน</div>
+
+            <!-- GIANT SCORE NUMBER -->
+            <div class="canva-giant-score-box blue">
+              <span class="canva-score-label-sub">TOTAL SCORE</span>
+              <div class="canva-giant-digit" id="canvaBlueScore">0</div>
+              <div class="canva-score-pts-tag">คะแนน (เต็ม 120)</div>
+            </div>
+
+            <div class="canva-team-status-pill" id="canvaBlueStatus">READY</div>
+          </div>
+
+          <!-- CENTER: NEON CLOCK & STATE -->
+          <div class="canva-col-center">
+            <!-- Text Stage Display (SET UP, READY, MATCH TIME, TIME UP) -->
+            <div class="canva-neon-title" id="canvaNeonTitle">SET UP</div>
+            
+            <!-- Giant Digital Clock Display -->
+            <div class="canva-digital-clock setup-mode" id="canvaClock">
+              <span id="canvaMin">01</span>:<span id="canvaSec">00</span><span class="canva-millis" id="canvaMs">.00</span>
+            </div>
+
+            <div class="canva-phase-indicator" id="canvaPhaseSub">
+              ช่วงเวลาจัดเตรียมหุ่นยนต์และอุปกรณ์ (SET UP TIME)
+            </div>
+
+            <!-- Tension Beat Live Waves Indicator -->
+            <div class="arena-beat-waves" id="beatWaveIndicator">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="beat-text">ARENA TENSION AUDIO ACTIVE</span>
+            </div>
+          </div>
+
+          <!-- RIGHT: RED TEAM GIANT SCORE -->
+          <div class="canva-col-score red-side">
+            <div class="canva-team-tag">
+              <i data-lucide="flame"></i>
+              <span>RED TEAM</span>
+            </div>
+            <div class="canva-team-heading" id="canvaRedName">ทีมอินทรีแดงเพลิง</div>
+            <div class="canva-team-sub" id="canvaRedSchool">โรงเรียนตัวแทนสายแดง</div>
+
+            <!-- GIANT SCORE NUMBER -->
+            <div class="canva-giant-score-box red">
+              <span class="canva-score-label-sub">TOTAL SCORE</span>
+              <div class="canva-giant-digit" id="canvaRedScore">0</div>
+              <div class="canva-score-pts-tag">คะแนน (เต็ม 120)</div>
+            </div>
+
+            <div class="canva-team-status-pill" id="canvaRedStatus">READY</div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Bottom Footer with Control Dock and ครั้งที่ 5 Badge (No Red Background) -->
+    <footer class="canva-view-footer">
+      <!-- Left: High-Tech College Organizer Badge -->
+      <div class="arena-footer-badge">
+        <div class="badge-icon-box">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <div class="badge-text-group">
+          <span class="badge-org-title">วิทยาลัยเทคนิคปักธงชัย</span>
+          <span class="badge-org-sub">สอศ. • อาชีวศึกษาจังหวัดนครราชสีมา</span>
+        </div>
+      </div>
+
+      <!-- Center: Floating Controls Dock -->
+      <div class="canva-control-dock">
+        <button class="canva-dock-btn primary" id="canvaDockStart" onclick="toggleTimer()">
+          <i data-lucide="play" id="canvaPlayIcon"></i>
+          <span id="canvaBtnText">START</span>
+        </button>
+        <button class="canva-dock-btn secondary" onclick="resetTimerPrompt()">
+          <i data-lucide="rotate-ccw"></i>
+          <span>RESET</span>
+        </button>
+        <button class="canva-dock-btn exit-dock-btn" onclick="closeCanvaView()">
+          <i data-lucide="layout-dashboard"></i>
+          <span>หน้าจัดการสกอร์</span>
+        </button>
+      </div>
+
+      <!-- Right: Official ครั้งที่ 5 High-Tech Ribbon Badge -->
+      <div class="canva-footer-right-badge">
+        <div class="badge-ribbon-content">
+          <div class="badge-title-lines">
+            <div class="badge-line-main">หุ่นยนต์ปักธงชัย</div>
+            <div class="badge-line-sub">พิชิตยอดเขาลำพระเพลิง</div>
+          </div>
+          <div class="badge-number-box">
+            <span class="badge-five-label">ครั้งที่</span>
+            <span class="badge-five-number">5</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ================= MODAL: HISTORY ================= -->
+  <div class="hud-modal" id="modalHistory">
+    <div class="modal-backdrop" onclick="closeModal('modalHistory')"></div>
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="archive"></i>
+          <span>ประวัติและผลการแข่งขัน (MATCH HISTORY)</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('modalHistory')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="history-actions-bar">
+          <button class="btn-cyber-primary" onclick="exportScoresExcel()">
+            <i data-lucide="file-spreadsheet"></i> ส่งออก Excel (.xlsx)
+          </button>
+          <button class="btn-cyber-secondary" onclick="exportHistoryCSV()">
+            <i data-lucide="download"></i> ส่งออก CSV
+          </button>
+          <button class="btn-cyber-secondary" onclick="clearHistoryPrompt()">
+            <i data-lucide="trash-2"></i> ล้างประวัติทั้งหมด
+          </button>
+        </div>
+        <div class="history-table-wrapper">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>เวลาบันทึก</th>
+                <th>คู่การแข่งขัน / รอบ</th>
+                <th>ทีมน้ำเงิน (BLUE)</th>
+                <th>คะแนน</th>
+                <th>ผลลัพธ์</th>
+                <th>คะแนน</th>
+                <th>ทีมแดง (RED)</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: SETTINGS ================= -->
+  <div class="hud-modal" id="modalSettings">
+    <div class="modal-backdrop" onclick="closeModal('modalSettings')"></div>
+    <div class="modal-card settings-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i data-lucide="settings-2"></i>
+          <span>การตั้งค่าระบบสกอร์บอร์ด (SYSTEM CONFIG)</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('modalSettings')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label class="setting-label">เวลาแข่งขันหลัก (วินาที):</label>
+          <input type="number" id="cfgMatchDuration" class="setting-input" value="180" min="30" max="1200" step="10">
+          <span class="setting-hint">ค่ามาตรฐาน 180 วินาที (3 นาที)</span>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">เวลาช่วง SET UP (วินาที):</label>
+          <input type="number" id="cfgSetupDuration" class="setting-input" value="60" min="10" max="300" step="10">
+          <span class="setting-hint">เวลาสำหรับเตรียมหุ่นยนต์ในสนาม (มาตรฐาน 60 วินาที)</span>
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">หักคะแนนฟาวล์ต่อครั้ง (คะแนน):</label>
+          <input type="number" id="cfgFoulPenalty" class="setting-input" value="5" min="1" max="50">
+        </div>
+        <div class="setting-group">
+          <label class="setting-label">เสียงประกอบและดนตรีตื่นเต้นในสนาม:</label>
+          <div class="radio-row">
+            <label><input type="radio" name="cfgSound" value="all" checked> เปิดเสียงทั้งหมด + ดนตรีจังหวะตื่นเต้น (Arena Beat)</label>
+            <label><input type="radio" name="cfgSound" value="sfx"> เฉพาะเสียงเอฟเฟกต์ (SFX เท่านั้น)</label>
+            <label><input type="radio" name="cfgSound" value="off"> ปิดเสียงทั้งหมด</label>
+          </div>
+        </div>
+        <div class="setting-actions">
+          <button class="btn-cyber-primary" onclick="saveSettings()">
+            <i data-lucide="check"></i> บันทึกการตั้งค่า
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Alert / Confirm Dialog Box -->
+  <div class="hud-modal" id="customConfirmModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card confirm-card">
+      <div class="confirm-icon-box">
+        <i data-lucide="alert-circle" class="confirm-icon"></i>
+      </div>
+      <h3 class="confirm-title" id="confirmTitle">ยืนยันการทำรายการ</h3>
+      <p class="confirm-msg" id="confirmMessage">คุณต้องการดำเนินการนี้ใช่หรือไม่?</p>
+      <div class="confirm-btn-row">
+        <button class="btn-cyber-secondary" id="confirmBtnCancel">ยกเลิก</button>
+        <button class="btn-cyber-primary confirm-danger" id="confirmBtnOk">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts with cache busting query string -->
+  <script src="audio.js?v=5.5"></script>
+  <script src="sync.js?v=5.5"></script>
+  <script src="xlsx.js?v=5.5"></script>
+  <script src="script.js?v=5.5"></script>
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>

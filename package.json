@@ -1,0 +1,9 @@
+{
+  "name": "robot-arena-lan",
+  "version": "1.0.0",
+  "description": "Robot Arena scoreboard - LAN relay server (no dependencies)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=16" },
+  "private": true
+}

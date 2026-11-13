@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จอแสดงผลการแข่งขัน (ARENA PROJECTOR DISPLAY) - การแข่งขันหุ่นยนต์ปักธงชัยพิชิตยอดเขาลำพระเพลิง ครั้งที่ 5</title>
+  <!-- Google Fonts: Orbitron, Anton, Bebas Neue, Chakra Petch & Rajdhani -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Chakra+Petch:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="display.css">
+</head>
+<body class="sci-fi-theme display-body">
+
+  <!-- Background Ambience -->
+  <div class="cyber-bg-overlay">
+    <div class="cyber-grid"></div>
+    <div class="radar-sweep"></div>
+    <div class="vignette"></div>
+    <div class="floating-light light-blue"></div>
+    <div class="floating-light light-red"></div>
+  </div>
+
+  <div class="display-container">
+    <!-- Top Logos Header from Canva (Clean Transparent Logos, No Red/Dark Box) -->
+    <header class="canva-view-header display-header">
+      <div class="canva-logos-container">
+        <img src="logos_transparent.png" alt="Logos: ศึกษาธิการ, สอศ. เทคนิคปักธงชัย, Central Korat, SE-ED" class="canva-header-img">
+      </div>
+
+      <div class="display-center-title-group">
+        <div class="event-title-glow" id="dispTournamentTitle">การแข่งขันหุ่นยนต์ปักธงชัยพิชิตยอดเขาลำพระเพลิง ครั้งที่ 5</div>
+        <div class="display-sub-tags">
+          <span class="match-category-tag" id="dispCategory">ระดับ ม.ต้น / ม.ปลาย</span>
+          <span class="divider">|</span>
+          <span class="match-round-tag" id="dispRound">รอบคัดเลือก : MATCH 01</span>
+        </div>
+      </div>
+
+      <div class="canva-view-actions">
+        <div class="sync-status-indicator online" id="syncStatusBadge" onclick="forceSyncScoresNow()" style="cursor:pointer" title="คลิกเพื่อบังคับซิงค์คะแนนทันที">
+          <span class="sync-dot"></span>
+          <span class="sync-text">LIVE SYNCED (ตรงกับจอกรรมการ)</span>
+        </div>
+        <!-- Sound Beat Toggle -->
+        <button class="canva-action-pill-btn active" id="dispBeatBtn" onclick="toggleDisplayBeat()" title="เปิด/ปิด ซาวน์จังหวะตื่นเต้น">
+          <i data-lucide="music-2" id="dispBeatIcon"></i>
+          <span id="dispBeatLabel">ซาวน์แข่ง: เปิด</span>
+        </button>
+        <button class="canva-action-icon-btn" onclick="toggleDisplaySound()" title="เปิด/ปิดเสียงเอฟเฟกต์">
+          <i data-lucide="volume-2" id="dispSoundIcon"></i>
+        </button>
+        <button class="canva-action-icon-btn" onclick="toggleFullscreen()" title="โหมดเต็มจอ (F11)">
+          <i data-lucide="maximize"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Center Cosmic Screen Container (GIANT SCORES & TIMER) -->
+    <main class="canva-central-arena display-main-arena">
+      <div class="canva-screen-frame display-screen-frame">
+        <!-- Floating Space Stars & Nebula Background -->
+        <div class="canva-starfield"></div>
+        <div class="canva-nebula-glow"></div>
+
+        <!-- Current Phase Badge -->
+        <div class="display-phase-banner" id="dispPhaseBanner">
+          <span class="phase-badge-pill" id="dispPhasePill">
+            <i data-lucide="wrench"></i> <span id="dispPhasePillText">SET UP (1 นาที)</span>
+          </span>
+        </div>
+
+        <!-- 3-COLUMN ARENA BATTLEFIELD: BLUE GIANT SCORE | CENTER TIMER | RED GIANT SCORE -->
+        <div class="canva-arena-grid display-grid">
+          
+          <!-- LEFT: BLUE TEAM GIANT SCORE -->
+          <div class="canva-col-score blue-side display-team-card">
+            <div class="canva-team-tag">
+              <i data-lucide="shield"></i>
+              <span>BLUE TEAM</span>
+            </div>
+            <div class="canva-team-heading" id="dispBlueName">ทีมพยัคฆ์สีน้ำเงิน</div>
+            <div class="canva-team-sub" id="dispBlueSchool">โรงเรียนตัวแทนสายน้ำเงิน</div>
+
+            <!-- GIANT SCORE NUMBER -->
+            <div class="canva-giant-score-box blue">
+              <span class="canva-score-label-sub">TOTAL SCORE</span>
+              <div class="canva-giant-digit" id="dispBlueScore">0</div>
+              <div class="canva-score-pts-tag">คะแนน (เต็ม 120)</div>
+            </div>
+
+            <div class="canva-team-status-pill" id="dispBlueStatus">READY</div>
+          </div>
+
+          <!-- CENTER: NEON CLOCK & STATE -->
+          <div class="canva-col-center display-center-col">
+            <!-- Text Stage Display (SET UP, READY, MATCH TIME, TIME UP) -->
+            <div class="canva-neon-title" id="dispNeonTitle">SET UP</div>
+            
+            <!-- Giant Digital Clock Display -->
+            <div class="canva-digital-clock setup-mode" id="dispClock">
+              <span id="dispMin">01</span>:<span id="dispSec">00</span><span class="canva-millis" id="dispMs">.00</span>
+            </div>
+
+            <div class="canva-phase-indicator" id="dispPhaseSub">
+              ช่วงเวลาจัดเตรียมหุ่นยนต์และอุปกรณ์ (SET UP TIME)
+            </div>
+
+            <!-- Tension Beat Live Waves Indicator -->
+            <div class="arena-beat-waves" id="dispBeatWave">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="beat-text">ARENA TENSION AUDIO ACTIVE</span>
+            </div>
+          </div>
+
+          <!-- RIGHT: RED TEAM GIANT SCORE -->
+          <div class="canva-col-score red-side display-team-card">
+            <div class="canva-team-tag">
+              <i data-lucide="flame"></i>
+              <span>RED TEAM</span>
+            </div>
+            <div class="canva-team-heading" id="dispRedName">ทีมอินทรีแดงเพลิง</div>
+            <div class="canva-team-sub" id="dispRedSchool">โรงเรียนตัวแทนสายแดง</div>
+
+            <!-- GIANT SCORE NUMBER -->
+            <div class="canva-giant-score-box red">
+              <span class="canva-score-label-sub">TOTAL SCORE</span>
+              <div class="canva-giant-digit" id="dispRedScore">0</div>
+              <div class="canva-score-pts-tag">คะแนน (เต็ม 120)</div>
+            </div>
+
+            <div class="canva-team-status-pill" id="dispRedStatus">READY</div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Bottom Footer with Organizer Badge and ครั้งที่ 5 High-Tech Ribbon (No Red Background) -->
+    <footer class="canva-view-footer display-footer">
+      <!-- Left: High-Tech College Organizer Badge -->
+      <div class="arena-footer-badge">
+        <div class="badge-icon-box">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <div class="badge-text-group">
+          <span class="badge-org-title">วิทยาลัยเทคนิคปักธงชัย</span>
+          <span class="badge-org-sub">สอศ. • อาชีวศึกษาจังหวัดนครราชสีมา</span>
+        </div>
+      </div>
+
+      <!-- Center: Arena Info -->
+      <div class="display-center-footer-info">
+        <i data-lucide="map-pin" style="width:16px;height:16px;color:var(--cyber-blue)"></i>
+        <span>ศูนย์การค้าเซ็นทรัล โคราช • วิทยาลัยเทคนิคปักธงชัย ร่วมกับ Central Group & SE-ED</span>
+      </div>
+
+      <!-- Right: Official ครั้งที่ 5 High-Tech Ribbon Badge -->
+      <div class="canva-footer-right-badge">
+        <div class="badge-ribbon-content">
+          <div class="badge-title-lines">
+            <div class="badge-line-main">หุ่นยนต์ปักธงชัย</div>
+            <div class="badge-line-sub">พิชิตยอดเขาลำพระเพลิง</div>
+          </div>
+          <div class="badge-number-box">
+            <span class="badge-five-label">ครั้งที่</span>
+            <span class="badge-five-number">5</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts with cache busting query string -->
+  <script src="audio.js?v=5.5"></script>
+  <script src="sync.js?v=5.5"></script>
+  <script src="display.js?v=5.5"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+/* ====================================================================
+   ARENA PROJECTOR DISPLAY SPECIFIC STYLES
+   Optimized for Fullscreen Projectors, TV Displays, and LED Arena Screens
+   ==================================================================== */
+
+.display-body {
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.display-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  z-index: 1;
+}
+
+.display-header {
+  padding: 12px 36px;
+  background: linear-gradient(180deg, rgba(10, 16, 32, 0.92) 0%, rgba(6, 10, 20, 0.75) 85%, transparent 100%);
+  border-bottom: 1px solid rgba(0, 210, 255, 0.15);
+}
+
+.display-center-title-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.display-sub-tags {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sync indicator */
+.sync-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cyber-green);
+  box-shadow: 0 0 8px var(--cyber-green);
+  animation: pulse-dot 1.5s infinite;
+}
+
+.sync-status-indicator.offline .sync-dot {
+  background: var(--cyber-red);
+  box-shadow: 0 0 8px var(--cyber-red);
+}
+
+.sync-text {
+  font-family: var(--font-scifi);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  color: var(--cyber-green);
+}
+
+.display-main-arena {
+  padding: 6px 30px;
+}
+
+.display-screen-frame {
+  max-width: 1600px;
+  max-height: 720px;
+  padding: 20px 30px;
+}
+
+.display-phase-banner {
+  position: relative;
+  z-index: 5;
+}
+
+.phase-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(0, 210, 255, 0.25), rgba(0, 90, 180, 0.45));
+  color: #fff;
+  padding: 6px 20px;
+  border-radius: 20px;
+  font-family: var(--font-thai);
+  font-size: 0.95rem;
+  font-weight: 700;
+  box-shadow: 0 0 16px var(--cyber-blue-glow);
+  border: 1px solid var(--cyber-blue);
+}
+
+.display-grid {
+  grid-template-columns: 360px 1fr 360px;
+  gap: 24px;
+}
+
+.display-team-card {
+  padding: 16px;
+}
+
+.display-team-card .canva-giant-digit {
+  font-size: 8.5rem;
+}
+
+.display-center-col .canva-neon-title {
+  font-size: 6.8rem;
+}
+
+.display-center-col .canva-digital-clock {
+  font-size: 6rem;
+}
+
+.display-center-footer-info {
+  font-size: 0.92rem;
+  color: var(--text-main);
+  background: rgba(10, 16, 32, 0.85);
+  backdrop-filter: blur(14px);
+  padding: 8px 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 210, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+  margin-bottom: 6px;
+}
+
+@media (max-width: 1400px) {
+  .display-grid {
+    grid-template-columns: 300px 1fr 300px;
+  }
+  .display-team-card .canva-giant-digit {
+    font-size: 6.8rem;
+  }
+  .display-center-col .canva-neon-title {
+    font-size: 5.5rem;
+  }
+  .display-center-col .canva-digital-clock {
+    font-size: 5rem;
+  }
+}
+
+/* Confetti Particle Celebration Effect */
+.confetti-particle {
+  position: fixed;
+  top: -20px;
+  z-index: 999999;
+  pointer-events: none;
+  border-radius: 3px;
+  will-change: transform, opacity;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(105vh) rotate(720deg) scale(0.6);
+    opacity: 0;
+  }
+}
