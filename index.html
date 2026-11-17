@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Chakra+Petch:ital,wght@0,300;0,400;0,600;0,700;1,400;1,700&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=5.6">
 </head>
 <body class="sci-fi-theme">
   <!-- Background Grid & Cyber Particle Ambience -->
@@ -561,11 +561,13 @@
     <footer class="hud-footer">
       <div class="keyboard-hints">
         <span class="hint-item"><kbd>SPACE</kbd> เริ่ม/หยุดเวลา</span>
-        <span class="hint-item"><kbd>R</kbd> รีเซ็ตเวลา</span>
-        <span class="hint-item hint-blue"><kbd>Q</kbd><kbd>W</kbd> น้ำเงิน +/- ขั้น</span>
-        <span class="hint-item hint-red"><kbd>O</kbd><kbd>P</kbd> แดง +/- ขั้น</span>
-        <span class="hint-item hint-blue"><kbd>A</kbd><kbd>S</kbd> น้ำเงิน ภารกิจ 2/3</span>
-        <span class="hint-item hint-red"><kbd>L</kbd><kbd>;</kbd> แดง ภารกิจ 2/3</span>
+        <span class="hint-item"><kbd>R</kbd> รีเซ็ตเวลา+คะแนน</span>
+        <span class="hint-item"><kbd>1</kbd> SET UP</span>
+        <span class="hint-item"><kbd>2</kbd> แข่ง 3 นาที</span>
+        <span class="hint-item hint-blue"><kbd>W</kbd><kbd>S</kbd> น้ำเงิน +/- ขั้น</span>
+        <span class="hint-item hint-blue"><kbd>A</kbd><kbd>D</kbd> น้ำเงิน ภารกิจ 2/3</span>
+        <span class="hint-item hint-red"><kbd>↑</kbd><kbd>↓</kbd> แดง +/- ขั้น</span>
+        <span class="hint-item hint-red"><kbd>←</kbd><kbd>→</kbd> แดง ภารกิจ 2/3</span>
         <span class="hint-item"><kbd>M</kbd> ปิด/เปิดเสียง</span>
         <span class="hint-item"><kbd>B</kbd> ซาวน์ตื่นเต้น</span>
         <span class="hint-item"><kbd>C</kbd> โหมด CANVA</span>
@@ -834,6 +836,17 @@
             <label><input type="radio" name="cfgSound" value="off"> ปิดเสียงทั้งหมด</label>
           </div>
         </div>
+        <div class="setting-group">
+          <label class="setting-label" for="cfgVolume">ระดับเสียง (VOLUME):</label>
+          <div class="volume-row">
+            <i data-lucide="volume-1" class="volume-icon"></i>
+            <input type="range" id="cfgVolume" class="volume-slider" min="0" max="100" step="5" value="100"
+                   oninput="onVolumeInput(this.value)" onchange="onVolumeCommit()" aria-label="ระดับเสียง">
+            <i data-lucide="volume-2" class="volume-icon"></i>
+            <span class="volume-value" id="cfgVolumeValue">100%</span>
+          </div>
+          <span class="setting-hint">ปรับความดังของเสียงเอฟเฟกต์และดนตรีทั้งหมด (มีผลกับหน้าจอโปรเจกเตอร์ด้วย) — เลื่อนแล้วจะได้ยินเสียงตัวอย่างทันที</span>
+        </div>
         <div class="setting-actions">
           <button class="btn-cyber-primary" onclick="saveSettings()">
             <i data-lucide="check"></i> บันทึกการตั้งค่า
@@ -860,10 +873,10 @@
   </div>
 
   <!-- Scripts with cache busting query string -->
-  <script src="audio.js?v=5.5"></script>
-  <script src="sync.js?v=5.5"></script>
-  <script src="xlsx.js?v=5.5"></script>
-  <script src="script.js?v=5.5"></script>
+  <script src="audio.js?v=5.6"></script>
+  <script src="sync.js?v=5.6"></script>
+  <script src="xlsx.js?v=5.6"></script>
+  <script src="script.js?v=5.6"></script>
   <script>
     // Initialize Lucide icons
     lucide.createIcons();

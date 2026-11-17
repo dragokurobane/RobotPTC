@@ -15,7 +15,8 @@ const state = {
     setupDuration: 60, // setup duration seconds
     foulPenalty: 5,
     soundEnabled: true,
-    bgmEnabled: true // Exciting Arena Tension Beat
+    bgmEnabled: true, // Exciting Arena Tension Beat
+    volume: 1 // master volume 0..1
   },
   timer: {
     phase: 'setup', // 'setup', 'ready', 'match', 'countup'
@@ -137,7 +138,7 @@ function initCrossWindowSync() {
   // the relay may have connected before this page finished loading — apply the current status now
   showLanStatus({ online: arenaSync.lanOnline, count: arenaSync.lanClients });
 
-  // Other hotkeys pressed while the projector window has focus (R, Q, W, O, P)
+  // Other hotkeys pressed while the projector window has focus (R, 1, 2, W/S/A/D, arrow keys)
   arenaSync.on('REQUEST_HOTKEY', (payload) => {
     if (payload && payload.code) handleHotkey(payload.code);
   });
@@ -280,6 +281,8 @@ function loadFromStorage() {
       updateSoundIcon();
       updateBeatIcon();
     }
+    // Volume is applied (and the slider shown) even if an older save has no volume yet (defaults to 100%)
+    applyVolumeToUI(state.settings.volume);
 
     if (parsed.teams) {
       if (parsed.teams.blue) {
@@ -1033,90 +1036,107 @@ function updateTimerDisplay() {
   }
 }
 
+// Put the clock back to the start value of the current phase (no confirm dialog)
+function resetTimer() {
+  pauseTimer();
+  if (state.timer.mode === 'countdown') {
+    const defaultDur = state.timer.phase === 'setup' ? (state.settings.setupDuration || 60) : state.settings.duration;
+    state.timer.remainingMs = defaultDur * 1000;
+    state.timer.countedSeconds.clear();
+    state.timer.isUrgentBeatStarted = false;
+  } else {
+    state.timer.elapsedMs = 0;
+  }
+  document.getElementById('timerBtnText').innerText = 'START';
+  document.getElementById('canvaBtnText').innerText = 'START';
+  document.getElementById('timerStateText').innerText = 'TIMER RESET';
+  document.getElementById('systemStatus').innerText = 'SYSTEM READY';
+
+  const neonTitle = document.getElementById('canvaNeonTitle');
+  if (neonTitle) {
+    if (state.timer.phase === 'setup') neonTitle.innerText = 'SET UP';
+    else if (state.timer.phase === 'ready') neonTitle.innerText = 'READY';
+    else if (state.timer.phase === 'countup') neonTitle.innerText = 'STOPWATCH';
+    else neonTitle.innerText = 'MATCH TIME';
+    // "TIME UP" leaves the title pulsing — restore the normal style of the phase
+    neonTitle.className = (state.timer.phase === 'setup' || state.timer.phase === 'ready')
+      ? 'canva-neon-title pulse'
+      : 'canva-neon-title';
+  }
+
+  updateTimerDisplay();
+
+  // Emit reset to projector screen
+  arenaSync.emit('TIMER_RESET', {
+    remainingMs: state.timer.remainingMs,
+    elapsedMs: state.timer.elapsedMs,
+    phase: state.timer.phase
+  });
+}
+
+// Clear boxes, missions, fouls, quick adjustments and finish times of both teams (no confirm dialog)
+function resetAllScores() {
+  ['blue', 'red'].forEach(team => {
+    const t = state.teams[team];
+    ['top', 'mid', 'base'].forEach(tier => {
+      ['team', 'w1', 'w2'].forEach(slot => {
+        t.boxes[tier][slot] = false;
+        updateBoxSlotUI(team, tier, slot);
+      });
+    });
+    t.egg = false;
+    t.flag = false;
+    t.fouls = 0;
+    t.customOffset = 0;
+    t.finishTime = null;
+
+    // UI Reset
+    const eggItem = document.getElementById(`${team}EggItem`);
+    if (eggItem) eggItem.classList.remove('active');
+    const flagItem = document.getElementById(`${team}FlagItem`);
+    if (flagItem) flagItem.classList.remove('active');
+    const badge = document.getElementById(`${team}FinishTime`);
+    if (badge) badge.innerText = 'เวลา: ยังไม่จบ';
+    const finishBtn = document.getElementById(`${team}FinishBtn`);
+    if (finishBtn) finishBtn.classList.remove('finished');
+    const statusTag = document.getElementById(`${team}StatusTag`);
+    if (statusTag) {
+      statusTag.classList.remove('finished');
+      statusTag.innerText = 'READY';
+    }
+    const canvaStatus = document.getElementById(team === 'blue' ? 'canvaBlueStatus' : 'canvaRedStatus');
+    if (canvaStatus) {
+      canvaStatus.classList.remove('finished');
+      canvaStatus.innerText = 'READY';
+    }
+  });
+
+  updateScores();
+  broadcastTeamUpdate();
+  sound.boxLatch(false);
+}
+
+// RESET button / R key: resets the clock AND both teams' scores
 function resetTimerPrompt() {
   sound.click();
   showConfirmDialog(
-    'รีเซ็ตเวลาการแข่งขัน',
-    'คุณต้องการรีเซ็ตเวลากลับไปเป็นค่าเริ่มต้นใช่หรือไม่?',
+    'รีเซ็ตเวลาและคะแนน',
+    'เวลาจะกลับไปเป็นค่าเริ่มต้น และคะแนนของทั้งทีมสีน้ำเงินและสีแดงจะถูกรีเซ็ตเป็น 0 รวมถึงกล่องและภารกิจ ต้องการดำเนินการต่อหรือไม่?',
     () => {
-      pauseTimer();
-      if (state.timer.mode === 'countdown') {
-        const defaultDur = state.timer.phase === 'setup' ? (state.settings.setupDuration || 60) : state.settings.duration;
-        state.timer.remainingMs = defaultDur * 1000;
-        state.timer.countedSeconds.clear();
-        state.timer.isUrgentBeatStarted = false;
-      } else {
-        state.timer.elapsedMs = 0;
-      }
-      document.getElementById('timerBtnText').innerText = 'START';
-      document.getElementById('canvaBtnText').innerText = 'START';
-      document.getElementById('timerStateText').innerText = 'TIMER RESET';
-      
-      const neonTitle = document.getElementById('canvaNeonTitle');
-      if (neonTitle) {
-        if (state.timer.phase === 'setup') neonTitle.innerText = 'SET UP';
-        else if (state.timer.phase === 'ready') neonTitle.innerText = 'READY';
-        else neonTitle.innerText = 'MATCH TIME';
-      }
-
-      updateTimerDisplay();
-
-      // Emit reset to projector screen
-      arenaSync.emit('TIMER_RESET', {
-        remainingMs: state.timer.remainingMs,
-        elapsedMs: state.timer.elapsedMs,
-        phase: state.timer.phase
-      });
+      resetTimer();
+      resetAllScores();
     }
   );
 }
 
 // ================= RESET ALL SCORES =================
+// "รีเซ็ตสกอร์ทั้งหมด" button: scores only, the clock is left as it is
 function resetAllScoresPrompt() {
   sound.click();
   showConfirmDialog(
     'รีเซ็ตข้อมูลทั้งหมดในสนาม (ครั้งที่ 5)',
     'คะแนนของทั้งทีมสีแดงและน้ำเงินจะถูกรีเซ็ตเป็น 0 รวมถึงการจัดวางกล่องและภารกิจ ต้องการดำเนินการต่อหรือไม่?',
-    () => {
-      ['blue', 'red'].forEach(team => {
-        const t = state.teams[team];
-        ['top', 'mid', 'base'].forEach(tier => {
-          ['team', 'w1', 'w2'].forEach(slot => {
-            t.boxes[tier][slot] = false;
-            updateBoxSlotUI(team, tier, slot);
-          });
-        });
-        t.egg = false;
-        t.flag = false;
-        t.fouls = 0;
-        t.customOffset = 0;
-        t.finishTime = null;
-
-        // UI Reset
-        const eggItem = document.getElementById(`${team}EggItem`);
-        if (eggItem) eggItem.classList.remove('active');
-        const flagItem = document.getElementById(`${team}FlagItem`);
-        if (flagItem) flagItem.classList.remove('active');
-        const badge = document.getElementById(`${team}FinishTime`);
-        if (badge) badge.innerText = 'เวลา: ยังไม่จบ';
-        const finishBtn = document.getElementById(`${team}FinishBtn`);
-        if (finishBtn) finishBtn.classList.remove('finished');
-        const statusTag = document.getElementById(`${team}StatusTag`);
-        if (statusTag) {
-          statusTag.classList.remove('finished');
-          statusTag.innerText = 'READY';
-        }
-        const canvaStatus = document.getElementById(team === 'blue' ? 'canvaBlueStatus' : 'canvaRedStatus');
-        if (canvaStatus) {
-          canvaStatus.classList.remove('finished');
-          canvaStatus.innerText = 'READY';
-        }
-      });
-
-      updateScores();
-      broadcastTeamUpdate();
-      sound.boxLatch(false);
-    }
+    () => resetAllScores()
   );
 }
 
@@ -1335,12 +1355,53 @@ function saveSettings() {
   sound.enabled = state.settings.soundEnabled;
   sound.bgmEnabled = state.settings.bgmEnabled;
 
+  // Volume slider (already applied live while dragging — read it again so Save always stores what is shown)
+  const volSlider = document.getElementById('cfgVolume');
+  if (volSlider) applyVolumeToUI(parseInt(volSlider.value, 10) / 100);
+
   updateSoundIcon();
   updateBeatIcon();
   saveToStorage();
   closeModal('modalSettings');
   updateScores();
   broadcastFullState();
+}
+
+// ================= VOLUME (SETTINGS) =================
+// Set the master volume (0..1), move the slider and refresh its % label
+function applyVolumeToUI(volume) {
+  const v = sound.setVolume(volume === undefined || volume === null ? 1 : volume);
+  state.settings.volume = v;
+  const pct = Math.round(v * 100);
+  const slider = document.getElementById('cfgVolume');
+  if (slider && parseInt(slider.value, 10) !== pct) slider.value = pct;
+  const label = document.getElementById('cfgVolumeValue');
+  if (label) label.innerText = `${pct}%`;
+  return v;
+}
+
+let volumeEmitTimer = null;
+function broadcastVolume() {
+  arenaSync.emit('VOLUME_UPDATE', { volume: state.settings.volume });
+}
+
+// Slider is being dragged: change the sound right away; tell the projector at most every ~120 ms
+function onVolumeInput(rawValue) {
+  applyVolumeToUI((parseInt(rawValue, 10) || 0) / 100);
+  if (!volumeEmitTimer) {
+    volumeEmitTimer = setTimeout(() => {
+      volumeEmitTimer = null;
+      broadcastVolume();
+    }, 120);
+  }
+}
+
+// Slider released: save it, sync the projector and play a short click so the level can be heard
+function onVolumeCommit() {
+  if (volumeEmitTimer) { clearTimeout(volumeEmitTimer); volumeEmitTimer = null; }
+  saveToStorage();
+  broadcastVolume();
+  sound.click();
 }
 
 // ================= MODAL & CONFIRM UTILS =================
@@ -1353,7 +1414,13 @@ function openModal(modalId) {
 function closeModal(modalId) {
   sound.click();
   const m = document.getElementById(modalId);
-  if (m) m.classList.remove('show');
+  if (m) {
+    // A slider / radio / number box inside the modal may still hold focus; release it so the
+    // keyboard hotkeys (which ignore typing fields) work again right after the modal closes
+    const active = document.activeElement;
+    if (active && active !== document.body && m.contains(active)) active.blur();
+    m.classList.remove('show');
+  }
 }
 
 function showConfirmDialog(title, message, onConfirm) {
@@ -1489,12 +1556,15 @@ function removeTier(teamKey) {
 
 // ================= GLOBAL KEYBOARD SHORTCUTS =================
 // Uses e.code (physical key), so it works with Thai or English keyboard layout.
-//   SPACE start/pause   R reset time   M mute   B beat   C CANVA view
-//   Q/W  Blue +box/-box      O/P  Red +box/-box
-//   A/S  Blue mission 2 (egg) / mission 3 (flag)
-//   L/;  Red  mission 2 (egg) / mission 3 (flag)
-const HOTKEY_CODES = new Set(['Space', 'KeyR', 'KeyM', 'KeyB', 'KeyC', 'KeyQ', 'KeyW', 'KeyO', 'KeyP',
-                              'KeyA', 'KeyS', 'Semicolon', 'KeyL', 'Escape']);
+//   SPACE start/pause   R reset time + scores   M mute   B beat   C CANVA view
+//   1  timer -> SET UP          2  timer -> match 3 minutes
+//   BLUE:  W add box   S remove box   A mission 2 (egg)   D mission 3 (flag)
+//   RED:   ↑ add box   ↓ remove box   ← mission 2 (egg)   → mission 3 (flag)
+const ARROW_CODES = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+const HOTKEY_CODES = new Set(['Space', 'KeyR', 'KeyM', 'KeyB', 'KeyC',
+                              'Digit1', 'Digit2', 'Numpad1', 'Numpad2',
+                              'KeyW', 'KeyS', 'KeyA', 'KeyD',
+                              ...ARROW_CODES, 'Escape']);
 
 // Returns true when the key was handled (caller should preventDefault)
 function handleHotkey(code) {
@@ -1512,11 +1582,11 @@ function handleHotkey(code) {
     return HOTKEY_CODES.has(code);
   }
 
-  // 2) Settings / history modal open: only Esc closes it
+  // 2) Settings / history modal open: only Esc closes it (arrow keys stay free so the history list can scroll)
   const openedModal = document.querySelector('.hud-modal.show');
   if (openedModal) {
     if (code === 'Escape') { closeModal(openedModal.id); return true; }
-    return HOTKEY_CODES.has(code);
+    return HOTKEY_CODES.has(code) && !ARROW_CODES.has(code);
   }
 
   // 3) Normal operation
@@ -1526,14 +1596,23 @@ function handleHotkey(code) {
     case 'KeyM': toggleSoundMaster(); return true;
     case 'KeyB': toggleArenaBeatMaster(); return true;
     case 'KeyC': toggleCanvaView(); return true;
-    case 'KeyQ': addTier('blue'); return true;
-    case 'KeyW': removeTier('blue'); return true;
-    case 'KeyO': addTier('red'); return true;
-    case 'KeyP': removeTier('red'); return true;
+
+    // Timer presets: 1 = SET UP, 2 = match 3 minutes (same as the preset buttons)
+    case 'Digit1': case 'Numpad1': setTimerPhase('setup', state.settings.setupDuration || 60); return true;
+    case 'Digit2': case 'Numpad2': setTimerPreset(180); return true;
+
+    // BLUE side
+    case 'KeyW': addTier('blue'); return true;
+    case 'KeyS': removeTier('blue'); return true;
     case 'KeyA': toggleMission('blue', 'egg'); return true;
-    case 'KeyS': toggleMission('blue', 'flag'); return true;
-    case 'KeyL': toggleMission('red', 'egg'); return true;
-    case 'Semicolon': toggleMission('red', 'flag'); return true;
+    case 'KeyD': toggleMission('blue', 'flag'); return true;
+
+    // RED side
+    case 'ArrowUp': addTier('red'); return true;
+    case 'ArrowDown': removeTier('red'); return true;
+    case 'ArrowLeft': toggleMission('red', 'egg'); return true;
+    case 'ArrowRight': toggleMission('red', 'flag'); return true;
+
     case 'Escape': {
       const canvaView = document.getElementById('canvaTimerView');
       if (canvaView && canvaView.classList.contains('active')) {
@@ -1557,6 +1636,12 @@ function setupKeyboardShortcuts() {
 
     // While editing a name/title: only Esc (or Enter in a text box) gives focus back to hotkeys
     if (isTypingTarget(e.target)) {
+      // Volume slider: nothing is typed there, so Esc should simply close the settings window
+      if (e.code === 'Escape' && e.target.tagName === 'INPUT' && e.target.type === 'range') {
+        e.target.blur();
+        if (handleHotkey('Escape')) e.preventDefault();
+        return;
+      }
       if (e.code === 'Escape' || (e.code === 'Enter' && e.target.tagName === 'INPUT')) {
         e.target.blur();
       }

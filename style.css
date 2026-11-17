@@ -1446,7 +1446,8 @@ body {
 
 .keyboard-hints {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 4px 12px;
 }
 
 .hint-item {
@@ -2404,6 +2405,38 @@ kbd {
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
+}
+
+/* Volume slider (settings) */
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volume-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+}
+
+.volume-slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 6px;
+  cursor: pointer;
+  accent-color: var(--cyber-blue);
+}
+
+.volume-value {
+  flex: 0 0 auto;
+  min-width: 52px;
+  text-align: right;
+  font-family: var(--font-scifi);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cyber-blue);
 }
 
 /* ================= RESPONSIVE DESIGN ================= */

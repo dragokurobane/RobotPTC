@@ -203,6 +203,7 @@ function initDisplayState() {
         dispState.settings = Object.assign(dispState.settings, parsed.settings);
         sound.enabled = dispState.settings.soundEnabled;
         sound.bgmEnabled = dispState.settings.bgmEnabled;
+        if (dispState.settings.volume !== undefined) sound.setVolume(dispState.settings.volume);
       }
     }
   } catch (e) {
@@ -263,6 +264,18 @@ function initSyncListeners() {
 
     if (data.timer) {
       applyTimerState(data.timer);
+    }
+
+    // Master volume chosen in the controller's settings
+    if (data.settings && data.settings.volume !== undefined) {
+      dispState.settings.volume = sound.setVolume(data.settings.volume);
+    }
+  });
+
+  // Volume slider moved in the controller's settings
+  arenaSync.on('VOLUME_UPDATE', (data) => {
+    if (data && data.volume !== undefined) {
+      dispState.settings.volume = sound.setVolume(data.volume);
     }
   });
 
@@ -615,8 +628,11 @@ function setupDisplayShortcuts() {
       if (e.repeat) return;
       // Send toggle command to sync bus so controller also starts/pauses
       arenaSync.emit('REQUEST_TIMER_TOGGLE');
-    } else if (['KeyR', 'KeyQ', 'KeyW', 'KeyO', 'KeyP', 'KeyA', 'KeyS', 'Semicolon', 'KeyL'].includes(e.code)) {
-      // Reset (R), box +/- (Q/W = Blue, O/P = Red) and missions (A/S = Blue, ;/L = Red) are performed by the controller window
+    } else if (['KeyR', 'Digit1', 'Digit2', 'Numpad1', 'Numpad2',
+                'KeyW', 'KeyS', 'KeyA', 'KeyD',
+                'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+      // Reset (R), timer presets (1 = SET UP, 2 = 3 min), Blue (W/S = box +/-, A/D = missions 2/3)
+      // and Red (arrow up/down = box +/-, arrow left/right = missions 2/3) are performed by the controller window
       e.preventDefault();
       if (e.repeat) return;
       arenaSync.emit('REQUEST_HOTKEY', { code: e.code });
